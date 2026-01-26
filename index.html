@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -80,10 +79,10 @@ button.generate {
 
 <div id="checklist"></div>
 
-<button class="generate" onclick="validateChecklist()">Generate Email</button>
+<button class="generate" onclick="if(validateChecklist()) generateEmail()">Generate Email</button>
 
 <script>
-// 🔹 EXCEL-LIKE CHECKLIST DATA (EDIT ONLY THIS IF NEEDED)
+// ✅ Checklist Data
 const checklistData = [
   "PRE-POST Nokia SCF backup taken",
   "Carrier Aggregation DL/UL verified",
@@ -104,7 +103,7 @@ const checklistData = [
   "Post cutover monitoring completed"
 ];
 
-// 🔹 AUTO CREATE CHECKLIST (NO MANUAL HTML)
+// ✅ Create Checklist Items
 const container = document.getElementById("checklist");
 
 checklistData.forEach(text => {
@@ -124,7 +123,7 @@ checklistData.forEach(text => {
   container.appendChild(div);
 });
 
-// 🔹 BUTTON LOGIC
+// ✅ Select Yes/No
 function selectOption(btn, choice) {
   const item = btn.closest('.check-item');
   const buttons = item.querySelectorAll('button');
@@ -146,7 +145,7 @@ function selectOption(btn, choice) {
   }
 }
 
-// 🔹 VALIDATION (NO = COMMENT MANDATORY)
+// ✅ Validate Checklist
 function validateChecklist() {
   let valid = true;
 
@@ -155,9 +154,7 @@ function validateChecklist() {
     const comment = item.querySelector('.comment');
     const error = item.querySelector('.error');
 
-    if (!ans) {
-      valid = false;
-    }
+    if (!ans) valid = false;
 
     if (ans === 'NO' && comment.value.trim() === '') {
       error.style.display = 'block';
@@ -169,34 +166,35 @@ function validateChecklist() {
 
   if (!valid) {
     alert("❌ Please complete checklist (NO requires comment)");
-    return;
+    return false;
   }
 
-  alert("✅ Checklist completed. Email can be generated.");
+  return true;
+}
+
+// ✅ Generate Email Text
+function generateEmail() {
+  let emailText = "Postcheck Cutover Checklist Status (HOT SWAP):\n\n";
+
+  document.querySelectorAll(".check-item").forEach(item => {
+    const question = item.querySelector(".row span").innerText;
+    const answer = item.dataset.answer || "NOT ANSWERED";
+    const comment = item.querySelector(".comment").value.trim();
+
+    emailText += `• ${question}\n`;
+    emailText += `  Status: ${answer}\n`;
+
+    if (answer === "NO" && comment !== "") {
+      emailText += `  Comment: ${comment}\n`;
+    }
+
+    emailText += "\n";
+  });
+
+  // Prompt to copy the email text
+  prompt("Copy the checklist email text below:", emailText);
 }
 </script>
- <!-- ✅ JavaScript -->
-  <script>
-    function generateEmail() {
-      let emailText = "Postcheck Cutover Checklist Status:\n\n";
-
-      document.querySelectorAll(".check-item").forEach(item => {
-        const question = item.querySelector(".question").innerText;
-        const yes = item.querySelector("input[value='Yes']").checked;
-        const no = item.querySelector("input[value='No']").checked;
-        const comment = item.querySelector("textarea").value;
-
-        let status = yes ? "YES" : no ? "NO" : "NOT ANSWERED";
-
-        emailText += `• ${question}\n`;
-        emailText += `  Status: ${status}\n`;
-
-        if (status === "NO" && comment.trim() !== "") {
-          emailText += `  Comment: ${comment}\n`;
-        }
-
-        emailText += "\n";
-      });
 
 </body>
 </html>
