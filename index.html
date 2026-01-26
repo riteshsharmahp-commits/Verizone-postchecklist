@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Post Cutover Checklist</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 15px;
+}
+
+.check-item {
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions button {
+  padding: 5px 14px;
+  margin-left: 6px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+  cursor: pointer;
+}
+
+.actions button.yes {
+  background: #28a745;
+  color: #fff;
+}
+
+.actions button.no {
+  background: #dc3545;
+  color: #fff;
+}
+
+.comment {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  display: none;
+}
+
+.error {
+  color: red;
+  font-size: 13px;
+  display: none;
+  margin-top: 4px;
+}
+
+button.generate {
+  margin-top: 20px;
+  padding: 10px 22px;
+  background: #0056d2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Postcheck Cutover Checklist (HOT SWAP)</h2>
+
+<div id="checklist"></div>
+
+<button class="generate" onclick="validateChecklist()">Generate Email</button>
+
+<script>
+// 🔹 EXCEL-LIKE CHECKLIST DATA (EDIT ONLY THIS IF NEEDED)
+const checklistData = [
+  "PRE-POST Nokia SCF backup taken",
+  "Carrier Aggregation DL/UL verified",
+  "Traffic free and no call drop observed",
+  "Cell availability normal",
+  "Nokia alarms migrated to Ericsson SAU",
+  "All alarms cleared post cutover",
+  "RET & TILT verified using CSI tool",
+  "Call testing completed",
+  "VoLTE call successful",
+  "Data service validated",
+  "Throughput verified",
+  "Handover successful",
+  "OSS counters normal",
+  "Neighbor relations verified",
+  "Site locked/unlocked successfully",
+  "Rollback plan not required",
+  "Post cutover monitoring completed"
+];
+
+// 🔹 AUTO CREATE CHECKLIST (NO MANUAL HTML)
+const container = document.getElementById("checklist");
+
+checklistData.forEach(text => {
+  const div = document.createElement("div");
+  div.className = "check-item";
+  div.innerHTML = `
+    <div class="row">
+      <span>${text}</span>
+      <div class="actions">
+        <button onclick="selectOption(this,'yes')">Yes</button>
+        <button onclick="selectOption(this,'no')">No</button>
+      </div>
+    </div>
+    <textarea class="comment" placeholder="Comment mandatory if NO"></textarea>
+    <div class="error">⚠ Comment required when NO selected</div>
+  `;
+  container.appendChild(div);
+});
+
+// 🔹 BUTTON LOGIC
+function selectOption(btn, choice) {
+  const item = btn.closest('.check-item');
+  const buttons = item.querySelectorAll('button');
+  const comment = item.querySelector('.comment');
+  const error = item.querySelector('.error');
+
+  buttons.forEach(b => b.classList.remove('yes','no'));
+
+  if (choice === 'yes') {
+    btn.classList.add('yes');
+    comment.style.display = 'none';
+    error.style.display = 'none';
+    comment.value = '';
+    item.dataset.answer = 'YES';
+  } else {
+    btn.classList.add('no');
+    comment.style.display = 'block';
+    item.dataset.answer = 'NO';
+  }
+}
+
+// 🔹 VALIDATION (NO = COMMENT MANDATORY)
+function validateChecklist() {
+  let valid = true;
+
+  document.querySelectorAll('.check-item').forEach(item => {
+    const ans = item.dataset.answer;
+    const comment = item.querySelector('.comment');
+    const error = item.querySelector('.error');
+
+    if (!ans) {
+      valid = false;
+    }
+
+    if (ans === 'NO' && comment.value.trim() === '') {
+      error.style.display = 'block';
+      valid = false;
+    } else {
+      error.style.display = 'none';
+    }
+  });
+
+  if (!valid) {
+    alert("❌ Please complete checklist (NO requires comment)");
+    return;
+  }
+
+  alert("✅ Checklist completed. Email can be generated.");
+}
+</script>
+ <!-- ✅ JavaScript -->
+  <script>
+    function generateEmail() {
+      let emailText = "Postcheck Cutover Checklist Status:\n\n";
+
+      document.querySelectorAll(".check-item").forEach(item => {
+        const question = item.querySelector(".question").innerText;
+        const yes = item.querySelector("input[value='Yes']").checked;
+        const no = item.querySelector("input[value='No']").checked;
+        const comment = item.querySelector("textarea").value;
+
+        let status = yes ? "YES" : no ? "NO" : "NOT ANSWERED";
+
+        emailText += `• ${question}\n`;
+        emailText += `  Status: ${status}\n`;
+
+        if (status === "NO" && comment.trim() !== "") {
+          emailText += `  Comment: ${comment}\n`;
+        }
+
+        emailText += "\n";
+      });
+
+</body>
+</html>
