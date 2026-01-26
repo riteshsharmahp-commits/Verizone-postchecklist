@@ -172,7 +172,7 @@ function validateChecklist() {
   return true;
 }
 
-// ✅ Generate Email Text
+// ✅ Generate Email Text and copy to clipboard
 function generateEmail() {
   let emailText = "Postcheck Cutover Checklist Status (HOT SWAP):\n\n";
 
@@ -191,8 +191,15 @@ function generateEmail() {
     emailText += "\n";
   });
 
-  // Prompt to copy the email text
-  prompt("Copy the checklist email text below:", emailText);
+  // ✅ Copy to clipboard
+  const tempTextarea = document.createElement("textarea");
+  tempTextarea.value = emailText;
+  document.body.appendChild(tempTextarea);
+  tempTextarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(tempTextarea);
+
+  alert("✅ Checklist copied to clipboard! You can now paste it in your email.");
 }
 </script>
 
