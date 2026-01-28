@@ -9,6 +9,24 @@ body {
   background: #f5f7fa;
   padding: 20px;
 }
+h2 {
+  margin-bottom: 10px;
+}
+.top-form {
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+}
+.top-form label {
+  font-weight: bold;
+}
+.top-form input {
+  width: 100%;
+  padding: 6px;
+  margin: 5px 0 10px 0;
+}
 .check-item {
   background: #fff;
   padding: 12px;
@@ -63,15 +81,16 @@ button.generate, button.copy {
   padding: 15px;
   border-radius: 6px;
   border: 1px solid #ddd;
-  display: none;
 }
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 th, td {
   border: 1px solid #aaa;
   padding: 8px;
+  text-align: left;
 }
 th {
   background: #eee;
@@ -81,20 +100,29 @@ th {
 
 <body>
 
-<h2>Postcheck Cutover Checklist (HOT SWAP)</h2>
+<h2>Postcheck Cutover Checklist</h2>
+
+<!-- 🔹 Top Editable Fields -->
+<div class="top-form">
+  <label>Node Name</label>
+  <input type="text" id="nodeName" placeholder="Enter Node Name">
+
+  <label>Software Version</label>
+  <input type="text" id="softwareVersion" placeholder="Enter Software Version">
+</div>
 
 <div id="checklist"></div>
 
 <button class="generate" onclick="if(validateChecklist()) generateReport()">Generate Report</button>
 
-<div id="report">
+<div id="report" style="display:none;">
   <h3>Checklist Report</h3>
-  <button class="copy" onclick="copyReport()">Copy Report</button>
+  <button class="copy" onclick="copyReport()">Copy Report to Clipboard</button>
   <div id="reportTable"></div>
 </div>
 
 <script>
-// ✅ NEW Checklist
+// ✅ New Checklist
 const checklistData = [
   "Integration Complete",
   "Alarms",
@@ -115,7 +143,6 @@ const checklistData = [
 
 const container = document.getElementById("checklist");
 
-// Create checklist UI
 checklistData.forEach(text => {
   const div = document.createElement("div");
   div.className = "check-item";
@@ -127,13 +154,13 @@ checklistData.forEach(text => {
         <button onclick="selectOption(this,'NOK')">NOK</button>
       </div>
     </div>
-    <textarea class="comment" placeholder="Enter remarks if NOK"></textarea>
-    <div class="error">⚠ Remark required when NOK selected</div>
+    <textarea class="comment" placeholder="Enter comments"></textarea>
+    <div class="error">⚠ Comment required when NOK selected</div>
   `;
   container.appendChild(div);
 });
 
-// OK / NOK selection
+// ✅ OK & NOK both show comment
 function selectOption(btn, choice) {
   const item = btn.closest('.check-item');
   const buttons = item.querySelectorAll('button');
@@ -141,8 +168,6 @@ function selectOption(btn, choice) {
   const error = item.querySelector('.error');
 
   buttons.forEach(b => b.classList.remove('ok','nok'));
-
-  // 🔹 Both OK & NOK will show comment
   comment.style.display = 'block';
 
   if(choice === 'OK'){
@@ -155,7 +180,7 @@ function selectOption(btn, choice) {
   }
 }
 
-// Validation
+// ✅ Validation
 function validateChecklist() {
   let valid = true;
   document.querySelectorAll('.check-item').forEach(item => {
@@ -174,35 +199,49 @@ function validateChecklist() {
   });
 
   if(!valid){
-    alert("❌ Please complete checklist (NOK requires remarks)");
+    alert("❌ Please complete checklist (NOK requires comments)");
     return false;
   }
   return true;
 }
 
-// Generate report
-function generateReport() {
-  const report = document.getElementById("report");
-  const reportTable = document.getElementById("reportTable");
-  let html = "<table><tr><th>Item</th><th>Status</th><th>Remarks</th></tr>";
+// ✅ Generate Report
+function generateReport(){
+  const node = document.getElementById('nodeName').value || '-';
+  const sw = document.getElementById('softwareVersion').value || '-';
+
+  let html = `
+    <p><b>Node Name:</b> ${node}</p>
+    <p><b>Software Version:</b> ${sw}</p>
+    <table>
+    <tr><th>Task</th><th>Status</th><th>Remarks</th></tr>
+  `;
 
   document.querySelectorAll('.check-item').forEach(item => {
-    const task = item.querySelector('span').innerText;
-    const status = item.dataset.answer;
-    const remark = item.querySelector('.comment').value || "-";
-    html += `<tr><td>${task}</td><td>${status}</td><td>${remark}</td></tr>`;
+    html += `
+      <tr>
+        <td>${item.querySelector('span').innerText}</td>
+        <td>${item.dataset.answer}</td>
+        <td>${item.querySelector('.comment').value || '-'}</td>
+      </tr>
+    `;
   });
 
-  html += "</table>";
-  reportTable.innerHTML = html;
-  report.style.display = "block";
+  html += '</table>';
+  document.getElementById('reportTable').innerHTML = html;
+  document.getElementById('report').style.display = 'block';
 }
 
-// Copy to clipboard
-function copyReport() {
-  let text = "Postcheck Cutover Checklist (HOT SWAP)\n\n";
+// ✅ Copy Report
+function copyReport(){
+  let text = `Postcheck Cutover Checklist\n\n`;
+  text += `Node Name: ${document.getElementById('nodeName').value || '-'}\n`;
+  text += `Software Version: ${document.getElementById('softwareVersion').value || '-'}\n\n`;
+
   document.querySelectorAll('.check-item').forEach(item => {
-    text += `${item.querySelector('span').innerText} : ${item.dataset.answer}\n`;
+    text += `• ${item.querySelector('span').innerText}\n`;
+    text += `  Status: ${item.dataset.answer}\n`;
+    text += `  Remarks: ${item.querySelector('.comment').value || '-'}\n\n`;
   });
 
   navigator.clipboard.writeText(text);
