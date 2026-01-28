@@ -142,15 +142,15 @@ function selectOption(btn, choice) {
 
   buttons.forEach(b => b.classList.remove('ok','nok'));
 
+  // 🔹 Both OK & NOK will show comment
+  comment.style.display = 'block';
+
   if(choice === 'OK'){
     btn.classList.add('ok');
-    comment.style.display = 'none';
-    comment.value = '';
     error.style.display = 'none';
     item.dataset.answer = 'OK';
   } else {
     btn.classList.add('nok');
-    comment.style.display = 'block';
     item.dataset.answer = 'NOK';
   }
 }
