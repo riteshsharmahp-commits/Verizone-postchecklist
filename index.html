@@ -9,9 +9,6 @@ body {
   background: #f5f7fa;
   padding: 20px;
 }
-h2 {
-  margin-bottom: 15px;
-}
 .check-item {
   background: #fff;
   padding: 12px;
@@ -31,11 +28,11 @@ h2 {
   border: 1px solid #aaa;
   cursor: pointer;
 }
-.actions button.yes {
+.actions button.ok {
   background: #28a745;
   color: #fff;
 }
-.actions button.no {
+.actions button.nok {
   background: #dc3545;
   color: #fff;
 }
@@ -66,26 +63,22 @@ button.generate, button.copy {
   padding: 15px;
   border-radius: 6px;
   border: 1px solid #ddd;
+  display: none;
 }
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 th, td {
   border: 1px solid #aaa;
   padding: 8px;
-  text-align: left;
 }
 th {
   background: #eee;
 }
-textarea.remark {
-  width: 100%;
-  padding: 4px;
-}
 </style>
 </head>
+
 <body>
 
 <h2>Postcheck Cutover Checklist (HOT SWAP)</h2>
@@ -94,37 +87,35 @@ textarea.remark {
 
 <button class="generate" onclick="if(validateChecklist()) generateReport()">Generate Report</button>
 
-<div id="report" style="display:none;">
+<div id="report">
   <h3>Checklist Report</h3>
-  <button class="copy" onclick="copyReport()">Copy Report to Clipboard</button>
+  <button class="copy" onclick="copyReport()">Copy Report</button>
   <div id="reportTable"></div>
 </div>
 
 <script>
-// ✅ Checklist Data
+// ✅ NEW Checklist
 const checklistData = [
-  "PRE-POST Nokia SCF backup taken",
-  "Carrier Aggregation DL/UL verified",
-  "Traffic free and no call drop observed",
-  "Cell availability normal",
-  "Nokia alarms migrated to Ericsson SAU",
-  "All alarms cleared post cutover",
-  "RET & TILT verified using CSI tool",
-  "Call testing completed",
-  "VoLTE call successful",
-  "Data service validated",
-  "Throughput verified",
-  "Handover successful",
-  "OSS counters normal",
-  "Neighbor relations verified",
-  "Site locked/unlocked successfully",
-  "Rollback plan not required",
-  "Post cutover monitoring completed"
+  "Integration Complete",
+  "Alarms",
+  "Cell Status",
+  "Radio Status",
+  "ENM Status",
+  "Baseline Execution",
+  "Term Point Status",
+  "ERAN Status and Traffic",
+  "UE Traffic",
+  "VSWR, RSSI, Light Levels",
+  "SAU / External Alarms Status",
+  "Relations Clean-up",
+  "RET",
+  "Call Test",
+  "Counters"
 ];
 
-// ✅ Create Checklist Items
 const container = document.getElementById("checklist");
 
+// Create checklist UI
 checklistData.forEach(text => {
   const div = document.createElement("div");
   div.className = "check-item";
@@ -132,102 +123,90 @@ checklistData.forEach(text => {
     <div class="row">
       <span>${text}</span>
       <div class="actions">
-        <button onclick="selectOption(this,'yes')">Yes</button>
-        <button onclick="selectOption(this,'no')">No</button>
+        <button onclick="selectOption(this,'OK')">OK</button>
+        <button onclick="selectOption(this,'NOK')">NOK</button>
       </div>
     </div>
-    <textarea class="comment remark" placeholder="Enter remarks if NO"></textarea>
-    <div class="error">⚠ Comment required when NO selected</div>
+    <textarea class="comment" placeholder="Enter remarks if NOK"></textarea>
+    <div class="error">⚠ Remark required when NOK selected</div>
   `;
   container.appendChild(div);
 });
 
-// ✅ Select Yes/No
+// OK / NOK selection
 function selectOption(btn, choice) {
   const item = btn.closest('.check-item');
   const buttons = item.querySelectorAll('button');
   const comment = item.querySelector('.comment');
   const error = item.querySelector('.error');
 
-  buttons.forEach(b => b.classList.remove('yes','no'));
+  buttons.forEach(b => b.classList.remove('ok','nok'));
 
-  if(choice==='yes'){
-    btn.classList.add('yes');
-    comment.style.display='none';
-    error.style.display='none';
-    comment.value='';
-    item.dataset.answer='YES';
+  if(choice === 'OK'){
+    btn.classList.add('ok');
+    comment.style.display = 'none';
+    comment.value = '';
+    error.style.display = 'none';
+    item.dataset.answer = 'OK';
   } else {
-    btn.classList.add('no');
-    comment.style.display='block';
-    item.dataset.answer='NO';
+    btn.classList.add('nok');
+    comment.style.display = 'block';
+    item.dataset.answer = 'NOK';
   }
 }
 
-// ✅ Validate Checklist
+// Validation
 function validateChecklist() {
   let valid = true;
-  document.querySelectorAll('.check-item').forEach(item=>{
+  document.querySelectorAll('.check-item').forEach(item => {
     const ans = item.dataset.answer;
     const comment = item.querySelector('.comment');
     const error = item.querySelector('.error');
 
-    if(!ans) valid=false;
+    if(!ans) valid = false;
 
-    if(ans==='NO' && comment.value.trim()===''){
-      error.style.display='block';
-      valid=false;
+    if(ans === 'NOK' && comment.value.trim() === ''){
+      error.style.display = 'block';
+      valid = false;
     } else {
-      error.style.display='none';
+      error.style.display = 'none';
     }
   });
+
   if(!valid){
-    alert("❌ Please complete checklist (NO requires remarks)");
+    alert("❌ Please complete checklist (NOK requires remarks)");
     return false;
   }
   return true;
 }
 
-// ✅ Generate Report Table
-function generateReport(){
-  const reportDiv = document.getElementById('report');
-  const reportTableDiv = document.getElementById('reportTable');
-  reportTableDiv.innerHTML = '';
+// Generate report
+function generateReport() {
+  const report = document.getElementById("report");
+  const reportTable = document.getElementById("reportTable");
+  let html = "<table><tr><th>Item</th><th>Status</th><th>Remarks</th></tr>";
 
-  let tableHTML = '<table><tr><th>Task</th><th>Status</th><th>Remarks</th></tr>';
-
-  document.querySelectorAll('.check-item').forEach(item=>{
-    const task = item.querySelector('.row span').innerText;
-    const status = item.dataset.answer || 'NOT ANSWERED';
-    const remark = item.querySelector('.comment').value.trim() || '-';
-    tableHTML += `<tr><td>${task}</td><td>${status}</td><td>${remark}</td></tr>`;
+  document.querySelectorAll('.check-item').forEach(item => {
+    const task = item.querySelector('span').innerText;
+    const status = item.dataset.answer;
+    const remark = item.querySelector('.comment').value || "-";
+    html += `<tr><td>${task}</td><td>${status}</td><td>${remark}</td></tr>`;
   });
 
-  tableHTML += '</table>';
-  reportTableDiv.innerHTML = tableHTML;
-  reportDiv.style.display='block';
+  html += "</table>";
+  reportTable.innerHTML = html;
+  report.style.display = "block";
 }
 
-// ✅ Copy Report to Clipboard
-function copyReport(){
-  const reportTableDiv = document.getElementById('reportTable');
-  let textToCopy = 'Postcheck Cutover Checklist Status (HOT SWAP):\n\n';
-
-  document.querySelectorAll('.check-item').forEach(item=>{
-    const task = item.querySelector('.row span').innerText;
-    const status = item.dataset.answer || 'NOT ANSWERED';
-    const remark = item.querySelector('.comment').value.trim() || '-';
-    textToCopy += `• ${task}\n  Status: ${status}\n  Remarks: ${remark}\n\n`;
+// Copy to clipboard
+function copyReport() {
+  let text = "Postcheck Cutover Checklist (HOT SWAP)\n\n";
+  document.querySelectorAll('.check-item').forEach(item => {
+    text += `${item.querySelector('span').innerText} : ${item.dataset.answer}\n`;
   });
 
-  const temp = document.createElement('textarea');
-  temp.value = textToCopy;
-  document.body.appendChild(temp);
-  temp.select();
-  document.execCommand('copy');
-  document.body.removeChild(temp);
-
-  alert('✅ Checklist copied to clipboard! You can now paste it in your email.');
+  navigator.clipboard.writeText(text);
+  alert("✅ Report copied to clipboard");
 }
 </script>
 
